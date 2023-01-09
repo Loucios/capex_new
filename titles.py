@@ -7,7 +7,7 @@ class Titles:
     base_style = 'base_style'
     begining_year = 2020
     capex_flow = 'Капитальные затраты в прогнозных ценах с учетом НДС, млн руб.'
-    chapter_12_directions = 'Направления мероприятий из Главы 12'
+    chapter_12_directions = 'СтруктураГлава12Сети'
     chapter_8_directions = 'СтруктураГлава8'
     ctp_unit_costs = 'ЦТПУдельники'
     const_indicators = 'Строительство'

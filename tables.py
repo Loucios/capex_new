@@ -53,6 +53,7 @@ class SummaryTable:
 
     def __post_init__(self, events: list[object],
                       is_total: bool, directions: str) -> None:
+        # diameter = 0
         for event in events:
             if is_total or getattr(event, directions) == self.number:
                 for attribute in fields(self):
@@ -61,10 +62,15 @@ class SummaryTable:
                         value = getattr(self, name)
                         value += getattr(event, name)
                         setattr(self, name, value)
+                        if name == 'diameter':
+                            print(value)
         self.event_years = self.get_event_years()
+        # self.diameter = self.get_diameter(diameter)
 
-    # def __repr__(self) -> str:
-    #     return f'{self.name=}, {self.event_years}'
+    def get_diameter(self, diameter):
+        if diameter:
+            return diameter / self.length
+        return diameter
 
     def get_event_years(self) -> str:
         '''Create terms like 2024-2026'''
