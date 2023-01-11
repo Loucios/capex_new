@@ -5,93 +5,6 @@ from titles import Titles
 
 
 @dataclass
-class SummaryTable:
-    number: int
-    name: str
-    events: InitVar[list]
-    is_total: InitVar[bool]
-    directions: InitVar[str]
-    event_years: str = '-'
-    # mw: float = 0.0
-    length: float = 0.0
-    diameter: float = 0.0
-    gh: float = 0.0
-    # th: float = 0.0
-    total_cost: float = 0.0
-    year_2020: float = 0.0
-    year_2021: float = 0.0
-    year_2022: float = 0.0
-    year_2023: float = 0.0
-    year_2024: float = 0.0
-    year_2025: float = 0.0
-    year_2026: float = 0.0
-    year_2027: float = 0.0
-    year_2028: float = 0.0
-    year_2029: float = 0.0
-    year_2030: float = 0.0
-    year_2031: float = 0.0
-    year_2032: float = 0.0
-    year_2033: float = 0.0
-    year_2034: float = 0.0
-    year_2035: float = 0.0
-    year_2036: float = 0.0
-    year_2037: float = 0.0
-    year_2038: float = 0.0
-    year_2039: float = 0.0
-    year_2040: float = 0.0
-    year_2041: float = 0.0
-    year_2042: float = 0.0
-    year_2043: float = 0.0
-    year_2044: float = 0.0
-    year_2045: float = 0.0
-    year_2046: float = 0.0
-    year_2047: float = 0.0
-    year_2048: float = 0.0
-    year_2049: float = 0.0
-    year_2050: float = 0.0
-    total: float = 0.0
-
-    def __post_init__(self, events: list[object],
-                      is_total: bool, directions: str) -> None:
-        # diameter = 0
-        for event in events:
-            if is_total or getattr(event, directions) == self.number:
-                for attribute in fields(self):
-                    name = attribute.name
-                    if name not in ('number', 'name', 'event_years'):
-                        value = getattr(self, name)
-                        value += getattr(event, name)
-                        setattr(self, name, value)
-                        if name == 'diameter':
-                            print(value)
-        self.event_years = self.get_event_years()
-        # self.diameter = self.get_diameter(diameter)
-
-    def get_diameter(self, diameter):
-        if diameter:
-            return diameter / self.length
-        return diameter
-
-    def get_event_years(self) -> str:
-        '''Create terms like 2024-2026'''
-
-        first_year = Titles.begining_year
-        last_year = Titles.ending_year
-        start_year = 0
-        end_year = first_year
-        for year in range(first_year, last_year + 1):
-            if getattr(self, 'year_' + str(year)):
-                if not start_year:
-                    start_year = year
-                end_year = year
-        if not start_year:
-            return '-'
-        if start_year == end_year:
-            return start_year
-        return f'{start_year}-{end_year}'
-
-
-@dataclass
 class ChapterDirect:
     number: int
     name: str
@@ -193,9 +106,10 @@ class BaseEvent:
     inv_program: str | None
     base_directions: str
     event_type: str
-    chapter7_directions: int
-    chapter8_directions: int
-    chapter12_directions: int
+    chapter_7_directions: int
+    chapter_8_directions: int
+    source_ch12_directions: int
+    network_ch12_directions: int
     total_cost: float | None
     year_2020: float | None
     year_2021: float | None
@@ -297,7 +211,8 @@ class SourceEvent(BaseEvent):
     laying_type: str = field(init=False, repr=False)
     length: float = field(init=False, repr=False)
     diameter: float = field(init=False, repr=False)
-    chapter8_directions: int = field(init=False, repr=False)
+    chapter_8_directions: int = field(init=False, repr=False)
+    network_ch12_directions: int = field(init=False, repr=False)
 
     source_unit_costs: InitVar[list]
     tfu_unit_costs: InitVar[list]
@@ -338,7 +253,8 @@ class SourceEvent(BaseEvent):
 class NetworkEvent(BaseEvent):
     mw: float = field(init=False, repr=False)
     th: float = field(init=False, repr=False)
-    chapter7_directions: int = field(init=False, repr=False)
+    chapter_7_directions: int = field(init=False, repr=False)
+    source_ch12_directions: int = field(init=False, repr=False)
 
     network_unit_costs: InitVar[list]
     ctp_unit_costs: InitVar[list]

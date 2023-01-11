@@ -1,11 +1,14 @@
+from base_tables import (NDS, ChapterDirect, CTPCostIndicator, DeflatorIndex,
+                         NetworkCostIndicator, NetworkEvent,
+                         SourceCostIndicator, SourceEvent, Stage, Terms,
+                         TfuUnitCost)
 from openpyxl import load_workbook
-from tables import (NDS, ChapterDirect, CTPCostIndicator, DeflatorIndex,
-                    NetworkCostIndicator, NetworkEvent, SourceCostIndicator,
-                    SourceEvent, Stage, SummaryTable, Terms, TfuUnitCost)
+from summary_tables import SummaryTable
 from titles import Titles
 
 
 class BaseMixin:
+    '''Наименование таблицы в Excel -> Наименование датакласса'''
     classes = {
         Titles.stages: Stage,
         Titles.deflator_indices: DeflatorIndex,
@@ -17,8 +20,10 @@ class BaseMixin:
         Titles.network_unit_costs: NetworkCostIndicator,
         Titles.ctp_unit_costs: CTPCostIndicator,
         Titles.network_events: NetworkEvent,
+        Titles.chapter_7_directions: ChapterDirect,
+        Titles.source_ch12_directions: ChapterDirect,
         Titles.chapter_8_directions: ChapterDirect,
-        Titles.chapter_12_directions: ChapterDirect,
+        Titles.network_ch12_directions: ChapterDirect,
     }
 
 
@@ -38,7 +43,6 @@ class Events(BaseMixin):
         tfu_unit_costs = self.__init_table(wb,
                                            table_names,
                                            Titles.tfu_unit_costs)
-
         network_unit_costs = self.__init_table(wb,
                                                table_names,
                                                Titles.network_unit_costs)
@@ -61,10 +65,17 @@ class Events(BaseMixin):
 
         nds = self.__init_table(wb, table_names, Titles.nds)
 
+        chapter7_directions = self.__init_table(wb, table_names,
+                                                Titles.chapter_7_directions)
         chapter8_directions = self.__init_table(wb, table_names,
                                                 Titles.chapter_8_directions)
-        chapter12_directions = self.__init_table(wb, table_names,
-                                                 Titles.chapter_12_directions)
+        source_ch12_directions = self.__init_table(
+                                                wb,
+                                                table_names,
+                                                Titles.source_ch12_directions)
+        network_ch12_directions = self.__init_table(
+            wb, table_names, Titles.network_ch12_directions
+        )
 
         # import and saving main tables
         self.source_events = self.__init_table(wb, table_names,
@@ -78,14 +89,24 @@ class Events(BaseMixin):
                                                 stages, deflator_indices,
                                                 terms, nds,
                                                 network_unit_costs,
-                                                ctp_unit_costs,
-                                                )
+                                                ctp_unit_costs,)
+        # creating and saving summary tables
+        self.chapter7_summary = self.__get_summary_tables(
+                                                    chapter7_directions,
+                                                    self.source_events,
+                                                    'chapter_7_directions')
+        self.source_ch12_sum = self.__get_summary_tables(
+                                                    source_ch12_directions,
+                                                    self.source_events,
+                                                    'source_ch12_directions')
         self.chapter8_summary = self.__get_summary_tables(
                                                     chapter8_directions,
-                                                    self.network_events)
-        self.chapter12_summary = self.__get_summary_tables(
-                                                    chapter12_directions,
-                                                    self.network_events)
+                                                    self.network_events,
+                                                    'chapter_8_directions')
+        self.network_ch12_sum = self.__get_summary_tables(
+                                                    network_ch12_directions,
+                                                    self.network_events,
+                                                    'network_ch12_directions')
 
     def __init_table(self, wb, table_names, table_name, *args):
         worksheet = wb[table_names[table_name]]
@@ -97,17 +118,17 @@ class Events(BaseMixin):
             import_data.append(self.classes[table_name](*values))
         return import_data
 
-    def __get_summary_tables(self, directions, events):
+    def __get_summary_tables(self, directions, events, direction_name):
         summary_tables = []
         for direct in directions:
             values = [
                 direct.number, direct.name, events, False,
-                'chapter8_directions'
+                direction_name
             ]
             summary_tables.append(SummaryTable(*values))
         values = [
             len(summary_tables) + 1, Titles.total, summary_tables, True,
-            'chapter8_directions'
+            direction_name
         ]
         summary_tables.append(SummaryTable(*values))
         return summary_tables
