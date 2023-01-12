@@ -148,7 +148,7 @@ class BaseEvent:
     terms: InitVar[list]
     nds: InitVar[list]
     total: float = field(init=False)
-    obj_type: str = field(init=False)
+    obj_type: str = field(init=False, repr=False)
 
     def set_capex(self, *args):
         pass

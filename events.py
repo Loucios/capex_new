@@ -1,9 +1,9 @@
-from base_tables import (NDS, ChapterDirect, CTPCostIndicator, DeflatorIndex,
-                         NetworkCostIndicator, NetworkEvent,
-                         SourceCostIndicator, SourceEvent, Stage, Terms,
-                         TfuUnitCost)
+from base_datas import (NDS, ChapterDirect, CTPCostIndicator, DeflatorIndex,
+                        NetworkCostIndicator, NetworkEvent,
+                        SourceCostIndicator, SourceEvent, Stage, Terms,
+                        TfuUnitCost)
 from openpyxl import load_workbook
-from summary_tables import SummaryTable
+from summary_datas import SummaryTable
 from titles import Titles
 
 
@@ -12,7 +12,7 @@ class BaseMixin:
     classes = {
         Titles.stages: Stage,
         Titles.deflator_indices: DeflatorIndex,
-        Titles.terms: Terms,
+        Titles.event_years: Terms,
         Titles.nds: NDS,
         Titles.source_unit_costs: SourceCostIndicator,
         Titles.tfu_unit_costs: TfuUnitCost,
@@ -55,7 +55,7 @@ class Events(BaseMixin):
         deflator_indices = self.__init_table(wb,
                                              table_names,
                                              Titles.deflator_indices)
-        terms = self.__init_table(wb, table_names, Titles.terms)
+        terms = self.__init_table(wb, table_names, Titles.event_years)
 
         cum_deflator = 1
         for index in deflator_indices:

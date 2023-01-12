@@ -6,7 +6,7 @@ from titles import Titles
 @dataclass
 class SummaryTable:
     number: int
-    name: str
+    event_title: str
     events: InitVar[list]
     is_total: InitVar[bool]
     directions: InitVar[str]
@@ -60,11 +60,11 @@ class SummaryTable:
         }
         if dict_summary_table[directions] == 'network':
             exclude_names = (
-                'number', 'name', 'event_years', 'diameter', 'mw', 'th'
+                'number', 'event_title', 'event_years', 'diameter', 'mw', 'th'
             )
         else:
             exclude_names = (
-                'number', 'name', 'event_years', 'length', 'diameter',
+                'number', 'event_title', 'event_years', 'length', 'diameter',
             )
         diameter = 0
         length = 0
