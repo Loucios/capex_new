@@ -9,7 +9,7 @@ from titles import Titles
 from widths import Formats, Widths
 
 
-class TableMixin:
+class BaseTable:
 
     def __init__(self, events: list[BaseEvent], sums: list[SummaryTable],
                  workbook: Workbook, name: str) -> None:
@@ -22,10 +22,10 @@ class TableMixin:
             Titles.header_style: Styles.style_3,
             Titles.footer_style: Styles.style_2,
         }
-        self.__add_styles__()
+        self._add_style()
         self.name = name
 
-    def __add_styles__(self) -> None:
+    def _add_style(self) -> None:
         for title, style in self.styles.items():
             if title not in self.wb.named_styles:
                 self.wb.add_named_style(style)
@@ -35,18 +35,18 @@ class TableMixin:
         sheet_name = ''.join(w[0].upper() for w in self.name.split())
         if sheet_name not in self.wb.sheetnames:
             self.wb.create_sheet(title=sheet_name)
-            self.create_title(sheet_name)
-            self.create_header(sheet_name)
-        self.create_content(sheet_name)
-        self.create_footer(sheet_name)
+            self._create_title(sheet_name)
+            self._create_header(sheet_name)
+        self._create_content(sheet_name)
+        self._create_footer(sheet_name)
 
-    def create_title(self, sheet_name):
+    def _create_title(self, sheet_name):
         '''Create title of our table'''
         ws = self.wb[sheet_name]
         ws.cell(row=1, column=1).value = self.name
         ws.cell(row=1, column=1).style = Titles.title_style
 
-    def create_header(self, sheet_name: str) -> None:
+    def _create_header(self, sheet_name: str) -> None:
         '''Create header of our table'''
         column = 1
         row = 3
@@ -67,7 +67,7 @@ class TableMixin:
                 ws.cell(row=row, column=column).value = getattr(Titles, title)
                 ws.cell(row=row, column=column).style = style
                 ws.cell(row=row + 1, column=column).style = style
-                self.__set_column_width__(sheet_name, title, column)
+                self._set_column_width__(sheet_name, title, column)
                 column += 1
             else:
                 # We must merge first row
@@ -84,17 +84,17 @@ class TableMixin:
                     ws.cell(row=row, column=column).style = style
                     ws.cell(row=row + 1, column=column).value = year
                     ws.cell(row=row + 1, column=column).style = style
-                    self.__set_column_width__(sheet_name, 'year_' + str(year),
-                                              column)
+                    self._set_column_width__(sheet_name, 'year_' + str(year),
+                                             column)
                     column += 1
                 ws.cell(row=row, column=column).style = style
                 ws.cell(row=row + 1, column=column).style = style
                 ws.cell(row=row + 1, column=column).value = Titles.total
-                self.__set_column_width__(sheet_name, 'total', column)
+                self._set_column_width__(sheet_name, 'total', column)
                 break
         ws.row_dimensions[row + 1].height = height
 
-    def create_content(self, sheet_name: str):
+    def _create_content(self, sheet_name: str):
         '''Create event data rows of our table'''
         column = 1
         row = 5
@@ -102,34 +102,49 @@ class TableMixin:
 
         for event in self.events:
             column = 1
-            self.__set_row_data__(event, sheet_name, row, column, style)
+            self._set_row_data(event, sheet_name, row, column, style)
             row += 1
 
-    def create_footer(self, sheet_name: str):
+    def _create_footer(self, sheet_name: str):
         '''Create footer of our table'''
         column = 1
         row = len(self.events) + 5
         style = Titles.footer_style
 
-        self.__set_row_data__(self.sums[-1], sheet_name, row, column, style)
+        self._set_row_data(self.sums[-1], sheet_name, row, column, style)
 
-    def __set_cell_value__(self, sheet_name, row, column, value, style, title):
+    def _set_cell_value(self, sheet_name, row, column, value, style, title):
         ws = self.wb[sheet_name]
         ws.cell(row=row, column=column).value = value
         ws.cell(row=row, column=column).style = style
         form = getattr(Formats, title)
         ws.cell(row=row, column=column).number_format = form
 
-    def __set_column_width__(self, sheet_name, title, column):
+    def _set_column_width__(self, sheet_name, title, column):
         ws = self.wb[sheet_name]
         width = getattr(Widths, title)
         ws.column_dimensions[get_column_letter(column)].width = width
 
-    def __set_row_data__(self, obj, sheet_name, row, column, style):
+    def _set_row_data(self, obj, sheet_name, row, column, style):
         for attribute in fields(self.events[0]):
             title = attribute.name
             if title != 'obj_type':
                 value = getattr(obj, title, '')
-                self.__set_cell_value__(sheet_name, row, column, value, style,
-                                        title)
+                self._set_cell_value(sheet_name, row, column, value, style,
+                                     title)
                 column += 1
+
+
+class Chapter7Table(BaseTable):
+    def _create_content(self, sheet_name: str):
+        self.events.sort(key=lambda x: x.chapter_7_directions, reverse=False)
+        super()._create_content(sheet_name)
+
+        column = 1
+        style = Titles.footer_style
+        row = 5
+        for direction in self.sums[:-1]:
+            ws = self.wb[sheet_name]
+            ws.insert_rows(row)
+            self._set_row_data(direction, sheet_name, row, column, style)
+            row += direction.amount

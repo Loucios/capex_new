@@ -49,6 +49,7 @@ class SummaryTable:
     year_2049: float = 0.0
     year_2050: float = 0.0
     total: float = 0.0
+    amount: int = field(init=False, default=0)
 
     def __post_init__(self, events: list[object],
                       is_total: bool, directions: str) -> None:
@@ -58,21 +59,22 @@ class SummaryTable:
             'source_ch12_directions': 'source',
             'network_ch12_directions': 'network',
         }
+        exclude_names = [
+            'number', 'event_title', 'event_years', 'diameter', 'amount'
+        ]
         if dict_summary_table[directions] == 'network':
-            exclude_names = (
-                'number', 'event_title', 'event_years', 'diameter', 'mw', 'th'
-            )
+            exclude_names += ['mw', 'th']
         else:
-            exclude_names = (
-                'number', 'event_title', 'event_years', 'length', 'diameter',
-            )
+            exclude_names += ['length',]
         diameter = 0
         length = 0
+        amount = 0
         # Пробегаем каждое мероприятие
         for event in events:
             # Если мероприятие относится к направлению
             # или мы создаем суммарную строку
             if is_total or getattr(event, directions) == self.number:
+                amount += 1
                 # Пробегаем все поля датакласса
                 for attribute in fields(self):
                     name = attribute.name
@@ -98,6 +100,7 @@ class SummaryTable:
         # определяем особым способом
         self.event_years = self.get_event_years()
         self.diameter = self.get_diameter()
+        self.amount = amount
 
     def get_diameter(self) -> float:
         if self.length:
