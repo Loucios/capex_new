@@ -4,17 +4,15 @@ from base_datas import BaseEvent
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from styles import Styles
-from summary_datas import SummaryTable
 from titles import Titles
 from widths import Formats, Widths
 
 
 class BaseTable:
 
-    def __init__(self, events: list[BaseEvent], sums: list[SummaryTable],
-                 workbook: Workbook, name: str) -> None:
+    def __init__(self, events: list[BaseEvent], workbook: Workbook,
+                 name: str) -> None:
         self.events = events
-        self.sums = sums
         self.wb = workbook
         self.styles = {
             Titles.base_style: Styles.style_1,
@@ -30,15 +28,17 @@ class BaseTable:
             if title not in self.wb.named_styles:
                 self.wb.add_named_style(style)
 
+    def _get_sheet_name(self):
+        return ''.join(w[0].upper() for w in self.name.split())
+
     def create_table(self) -> None:
         '''Create the table'''
-        sheet_name = ''.join(w[0].upper() for w in self.name.split())
+        sheet_name = self._get_sheet_name()
         if sheet_name not in self.wb.sheetnames:
             self.wb.create_sheet(title=sheet_name)
             self._create_title(sheet_name)
             self._create_header(sheet_name)
         self._create_content(sheet_name)
-        self._create_footer(sheet_name)
 
     def _create_title(self, sheet_name):
         '''Create title of our table'''
@@ -99,19 +99,14 @@ class BaseTable:
         column = 1
         row = 5
         style = Titles.base_style
+        summary_row = self.events.pop()
 
         for event in self.events:
-            column = 1
             self._set_row_data(event, sheet_name, row, column, style)
             row += 1
-
-    def _create_footer(self, sheet_name: str):
-        '''Create footer of our table'''
-        column = 1
-        row = len(self.events) + 5
-        style = Titles.footer_style
-
-        self._set_row_data(self.sums[-1], sheet_name, row, column, style)
+        # table footer
+        self._set_row_data(summary_row, sheet_name, row, column, style)
+        self.events.append(summary_row)
 
     def _set_cell_value(self, sheet_name, row, column, value, style, title):
         ws = self.wb[sheet_name]
@@ -135,16 +130,40 @@ class BaseTable:
                 column += 1
 
 
-class Chapter7Table(BaseTable):
+class SumTable:
+    def __init__(self, sums) -> None:
+        self.sums = sums
+
+
+class Chapter7Table(BaseTable, SumTable):
     def _create_content(self, sheet_name: str):
+        summary = self.events.pop()
         self.events.sort(key=lambda x: x.chapter_7_directions, reverse=False)
+        self.events.append(summary)
         super()._create_content(sheet_name)
 
         column = 1
         style = Titles.footer_style
         row = 5
-        for direction in self.sums[:-1]:
-            ws = self.wb[sheet_name]
+        ws = self.wb[sheet_name]
+        for direction in self.sums:
             ws.insert_rows(row)
             self._set_row_data(direction, sheet_name, row, column, style)
-            row += direction.amount
+            row += (direction.amount + 1)
+
+
+class Chapter8Table(BaseTable):
+    def _create_content(self, sheet_name: str):
+        summary = self.events.pop()
+        self.events.sort(key=lambda x: x.chapter_8_directions, reverse=False)
+        self.events.append(summary)
+        super()._create_content(sheet_name)
+
+        column = 1
+        style = Titles.footer_style
+        row = 5
+        ws = self.wb[sheet_name]
+        for direction in self.sums:
+            ws.insert_rows(row)
+            self._set_row_data(direction, sheet_name, row, column, style)
+            row += (direction.amount + 1)

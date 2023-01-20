@@ -8,8 +8,7 @@ class SummaryTable:
     number: int
     event_title: str
     events: InitVar[list]
-    is_total: InitVar[bool]
-    directions: InitVar[str]
+    directions: InitVar[str | None] = None
     event_years: str = '-'
     mw: float = 0.0
     length: float = 0.0
@@ -51,43 +50,31 @@ class SummaryTable:
     total: float = 0.0
     amount: int = field(init=False, default=0)
 
-    def __post_init__(self, events: list[object],
-                      is_total: bool, directions: str) -> None:
-        dict_summary_table = {
-            'chapter_7_directions': 'source',
-            'chapter_8_directions': 'network',
-            'source_ch12_directions': 'source',
-            'network_ch12_directions': 'network',
-        }
+    def __post_init__(self, events: list[object], directions) -> None:
         exclude_names = [
             'number', 'event_title', 'event_years', 'diameter', 'amount'
         ]
-        if dict_summary_table[directions] == 'network':
-            exclude_names += ['mw', 'th']
-        else:
-            exclude_names += ['length',]
         diameter = 0
         length = 0
         amount = 0
-        # Пробегаем каждое мероприятие
         for event in events:
             # Если мероприятие относится к направлению
             # или мы создаем суммарную строку
-            if is_total or getattr(event, directions) == self.number:
+            if directions is None or getattr(event, directions) == self.number:
                 amount += 1
                 # Пробегаем все поля датакласса
                 for attribute in fields(self):
                     name = attribute.name
                     # Если у нас мероприятия на сетях, то
                     # аккуратно обрабатываем средний диаметр
-                    if dict_summary_table[directions] == 'network':
-                        if name == 'length':
-                            length = getattr(event, name)
-                        if name == 'diameter':
-                            diameter = getattr(event, name)
-                            self.diameter += diameter * length
-                            diameter = 0
-                            length = 0
+                    # if dict_summary_table[directions] == 'network':
+                    if name == 'length':
+                        length = getattr(event, name)
+                    if name == 'diameter':
+                        diameter = getattr(event, name)
+                        self.diameter += diameter * length
+                        diameter = 0
+                        length = 0
                     # Исключаем поля, которые не суммируем
                     # или которые получаем извне
                     # или которые определяем особым способом
@@ -109,7 +96,6 @@ class SummaryTable:
 
     def get_event_years(self) -> str:
         '''Create terms like 2024-2026'''
-
         first_year = Titles.begining_year
         last_year = Titles.ending_year
         start_year = 0

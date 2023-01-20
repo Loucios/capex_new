@@ -208,11 +208,11 @@ class BaseEvent:
 
 @dataclass
 class SourceEvent(BaseEvent):
-    laying_type: str = field(init=False, repr=False)
-    length: float = field(init=False, repr=False)
-    diameter: float = field(init=False, repr=False)
-    chapter_8_directions: int = field(init=False, repr=False)
-    network_ch12_directions: int = field(init=False, repr=False)
+    laying_type: str = field(init=False, default='')
+    length: float = field(init=False, default=0.0)
+    diameter: float = field(init=False, default=0.0)
+    chapter_8_directions: int = field(init=False, default='')
+    network_ch12_directions: int = field(init=False, default='')
 
     source_unit_costs: InitVar[list]
     tfu_unit_costs: InitVar[list]
@@ -251,10 +251,10 @@ class SourceEvent(BaseEvent):
 
 @dataclass
 class NetworkEvent(BaseEvent):
-    mw: float = field(init=False, repr=False)
-    th: float = field(init=False, repr=False)
-    chapter_7_directions: int = field(init=False, repr=False)
-    source_ch12_directions: int = field(init=False, repr=False)
+    mw: float = field(init=False, default=0.0)
+    th: float = field(init=False, default=0.0)
+    chapter_7_directions: int = field(init=False, default='')
+    source_ch12_directions: int = field(init=False, default='')
 
     network_unit_costs: InitVar[list]
     ctp_unit_costs: InitVar[list]
