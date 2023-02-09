@@ -294,7 +294,7 @@ class NetworkEvent(BaseEvent):
             laying_type = laying_types[self.laying_type]
             event_type = network_event_types[self.event_type]
             unit_cost = getattr(item, f'{event_type}_{laying_type}')
-            self.total_cost = unit_cost * self.length
+            self.total_cost = unit_cost * self.length / 1000
         else:
             item = HelpClass.binary_search(self.gh, ctp_unit_costs, 'power')
             unit_cost = getattr(item, ctp_event_types[self.event_type])

@@ -20,6 +20,7 @@ class Titles:
     deflators = 'Индексы'
     design_work = 'ПИР'
     diameter = 'Диаметр, мм'
+    direction_style = 'direction_style'
     district = 'Административный район'
     elevated = 'надземная'
     ending_year = 2050

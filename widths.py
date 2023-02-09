@@ -13,9 +13,9 @@ class Widths:
     event_title = 30
     event_years = 12
     mw = 7
-    laying_type = 10
-    length = 10
-    diameter = 7
+    laying_type = 15
+    length = 16
+    diameter = 10
     gh = 9
     th = 9
     design_work = 5
@@ -63,6 +63,7 @@ class Widths:
 
 @dataclass(frozen=True)
 class Formats:
+    title = 'General'
     number = 'General'
     eto_name = 'General'
     tso_name = 'General'

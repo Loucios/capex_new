@@ -77,6 +77,15 @@ class Styles:
         indent=0
     )
 
+    _direction_alignment = Alignment(
+        horizontal='left',
+        vertical='center',
+        text_rotation=0,
+        wrap_text=True,
+        shrink_to_fit=False,
+        indent=0
+    )
+
     _number_format = 'General'
 
     _protection = Protection(
@@ -118,3 +127,12 @@ class Styles:
         title_style = NamedStyle(name=Titles.title_style)
         title_style.font = cls._title_font
         return title_style
+
+    @classmethod
+    @property
+    def style_5(cls):
+        direction_style = NamedStyle(name=Titles.direction_style)
+        direction_style.font = cls._header_font
+        direction_style.border = cls._base_border
+        direction_style.alignment = cls._direction_alignment
+        return direction_style

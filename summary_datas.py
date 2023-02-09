@@ -8,7 +8,7 @@ class SummaryTable:
     number: int
     event_title: str
     events: InitVar[list]
-    directions: InitVar[str | None] = None
+    directions: str | None = None
     event_years: str = '-'
     mw: float = 0.0
     length: float = 0.0
@@ -50,9 +50,10 @@ class SummaryTable:
     total: float = 0.0
     amount: int = field(init=False, default=0)
 
-    def __post_init__(self, events: list[object], directions) -> None:
+    def __post_init__(self, events: list[object]) -> None:
         exclude_names = [
-            'number', 'event_title', 'event_years', 'diameter', 'amount'
+            'number', 'directions', 'event_title', 'event_years',
+            'diameter', 'amount',
         ]
         diameter = 0
         length = 0
@@ -60,7 +61,8 @@ class SummaryTable:
         for event in events:
             # Если мероприятие относится к направлению
             # или мы создаем суммарную строку
-            if directions is None or getattr(event, directions) == self.number:
+            if (self.directions is None or
+               getattr(event, self.directions) == self.number):
                 amount += 1
                 # Пробегаем все поля датакласса
                 for attribute in fields(self):
@@ -110,15 +112,3 @@ class SummaryTable:
         if start_year == end_year:
             return start_year
         return f'{start_year}-{end_year}'
-
-
-@dataclass
-class SourceSummaryTable(SummaryTable):
-    length: float = field(init=False, default=0.0)
-    diameter: float = field(init=False, default=0.0)
-
-
-@dataclass
-class NetworkSummaryTable(SummaryTable):
-    mw: float = field(init=False, default=0.0)
-    th: float = field(init=False, default=0.0)
