@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from base_datas import (NDS, ChapterDirect, CTPCostIndicator, DeflatorIndex,
                         NetworkCostIndicator, NetworkEvent,
                         SourceCostIndicator, SourceEvent, Stage, Terms,
@@ -68,10 +70,14 @@ class Events(BaseMixin):
         base_params = (stages, deflator_indices, self.terms, nds)
         source_params = (source_unit_costs, tfu_unit_costs)
         network_params = (network_unit_costs, ctp_unit_costs)
-        self.source_events = self._get_table(Titles.source_events,
-                                             *base_params, *source_params)
-        self.network_events = self._get_table(Titles.network_events,
-                                              *base_params, *network_params)
+        self.source_events, self.source_total = self._get_table(
+                                                        Titles.source_events,
+                                                        *base_params,
+                                                        *source_params)
+        self.network_events, self.network_total = self._get_table(
+                                                        Titles.network_events,
+                                                        *base_params,
+                                                        *network_params)
 
         # creating and saving summary tables
         self.chapter7_summary = self._get_summary_table(
@@ -102,7 +108,7 @@ class Events(BaseMixin):
 
         worksheet = self.wb[self.table_names[table_name]]
         range = worksheet.tables[table_name].ref
-        origin_data = worksheet[range][1:]
+        origin_data = worksheet[range][1:]  # bad
         import_data = []
         for row in origin_data:
             values = (cell.value for cell in row)
@@ -117,17 +123,22 @@ class Events(BaseMixin):
                 item.number = number
             # Create a "Total" row
             values = (number + 1, Titles.total, import_data)
-            import_data.append(SummaryTable(*values))
+            return import_data, SummaryTable(*values)
         return import_data
 
     def _get_summary_table(self, direction_name: str):
         directions = self._get_table(direction_name)
         summary_tables = []
         events = getattr(self, self.group_event[direction_name])
-        sum_table = events.pop()
         atribute_name = self.atributes[direction_name]
         for direct in directions:
             values = (direct.number, direct.name, events, atribute_name)
             summary_tables.append(SummaryTable(*values))
-        events.append(sum_table)
         return summary_tables
+
+    def split_events_by_tso(self, type, attribute):
+        events_by_tso = defaultdict(list)
+        for event in getattr(self, type + '_events'):
+            a = getattr(event, attribute)
+            events_by_tso[a].append(event)
+        return events_by_tso

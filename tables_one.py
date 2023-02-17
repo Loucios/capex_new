@@ -24,48 +24,39 @@ class BaseTable:
         'chapter_7_directions': Chapter7Directions,
         'chapter_8_directions': Chapter8directions,
     }
+    styles = {
+        Titles.base_style: Styles.style_1,
+        Titles.title_style: Styles.style_4,
+        Titles.header_style: Styles.style_3,
+        Titles.footer_style: Styles.style_2,
+        Titles.direction_style: Styles.style_5,
+    }
 
-    def __init__(self, events: list[BaseEvent], workbook: Workbook,
-                 terms: list[Terms], sums: list[SummaryTable] = None,
-                 by_org: str = None) -> None:
-        self.events = events
+    def __init__(self, workbook: Workbook, events: list[BaseEvent],
+                 total: SummaryTable, terms: list[Terms],
+                 sums: list[SummaryTable] = None, tso: str = None) -> None:
         self.wb = workbook
-        self.styles = {
-            Titles.base_style: Styles.style_1,
-            Titles.title_style: Styles.style_4,
-            Titles.header_style: Styles.style_3,
-            Titles.footer_style: Styles.style_2,
-            Titles.direction_style: Styles.style_5,
-        }
-        self._add_style()
-        self.sums = sums
-        self.by_org = by_org
-        self._sort_events()
-        self.name = self._get_name()
+        self.events = events
+        self.total = total
         self.start = terms[0].start_year
         self.end = terms[0].end_year
+        self.sums = sums
+        self.tso = tso
         self.table = self._get_table()
+        self.name = self._get_name()
+        self.sheet_name = self._get_sheet_name()
+
+        self._add_style()
+        self._sort_events()
 
     def _get_table(self):
-        if self.sums is not None:
-            return self.tables[self.sums[0].directions]
         return self.tables[self.events[0].obj_type]
 
     def _get_name(self):
-        if self.sums is None:
-            name = getattr(SheetNames, self.events[0].obj_type)
-        else:
-            name = getattr(SheetNames, self.sums[0].directions)
-        return name
+        return getattr(SheetNames, self.events[0].obj_type)
 
     def _sort_events(self):
-        if self.sums is not None:
-            summary = self.events.pop()
-            directions = self.sums[0].directions
-            self.events.sort(
-                key=lambda x: getattr(x, directions), reverse=False
-            )
-            self.events.append(summary)
+        pass
 
     def _add_style(self) -> None:
         for title, style in self.styles.items():
@@ -74,32 +65,28 @@ class BaseTable:
 
     def create_table(self) -> None:
         '''Create the table'''
-        sheet_name = self._get_sheet_name()
-        if sheet_name not in self.wb.sheetnames:
-            self.wb.create_sheet(title=sheet_name)
-            self._create_title(sheet_name)
-            self._create_header(sheet_name)
-        self._create_content(sheet_name)
+        if self.sheet_name not in self.wb.sheetnames:
+            self.wb.create_sheet(title=self.sheet_name)
+            self._create_title()
+            self._create_header()
+        self._create_content()
 
     def _get_sheet_name(self):
         return ''.join(w[0].upper() for w in self.name.split())
 
-    def _create_title(self, sheet_name):
+    def _create_title(self):
         '''Create title of our table'''
-        row = self.title_row
-        column = self.column
-        value = self.name
-        style = Titles.title_style
-        title = 'title'
-        self._set_cell_value(sheet_name, row, column, value, style, title)
+        self._set_cell_value(
+            self.title_row, self.column, self.name, Titles.title_style, 'title'
+        )
 
-    def _create_header(self, sheet_name: str) -> None:
+    def _create_header(self) -> None:
         '''Create header of our table'''
         column = self.column
         row = self.header_row
         height = self.header_height
         style = Titles.header_style
-        ws = self.wb[sheet_name]
+        ws = self.wb[self.sheet_name]
 
         for attribute in fields(self.table):
             title = attribute.name
@@ -112,7 +99,7 @@ class BaseTable:
                 ws.cell(row=row, column=column).value = getattr(Titles, title)
                 ws.cell(row=row, column=column).style = style
                 ws.cell(row=row + 1, column=column).style = style
-                self._set_column_width(sheet_name, title, column)
+                self._set_column_width(title, column)
                 column += 1
             else:
                 # We must merge first row
@@ -127,44 +114,38 @@ class BaseTable:
                     ws.cell(row=row, column=column).style = style
                     ws.cell(row=row + 1, column=column).value = year
                     ws.cell(row=row + 1, column=column).style = style
-                    self._set_column_width(sheet_name, 'year_' + str(year),
-                                           column)
+                    self._set_column_width('year_' + str(year), column)
                     column += 1
                 ws.cell(row=row, column=column).style = style
                 ws.cell(row=row + 1, column=column).style = style
                 ws.cell(row=row + 1, column=column).value = Titles.total
-                self._set_column_width(sheet_name, 'total', column)
+                self._set_column_width('total', column)
                 break
         ws.row_dimensions[row + 1].height = height
 
-    def _create_content(self, sheet_name: str):
+    def _create_content(self):
         '''Create event data rows of our table'''
-        column = self.column
         row = self.content_row
-        style = Titles.base_style
-        summary_row = self.events.pop()
-
+        # content table
         for event in self.events:
-            self._set_row_data(event, sheet_name, row, column, style)
+            self._set_row_data(event, row, self.column, Titles.base_style)
             row += 1
         # table footer
-        style = Titles.footer_style
-        self._set_row_data(summary_row, sheet_name, row, column, style)
-        self.events.append(summary_row)
+        self._set_row_data(self.total, row, self.column, Titles.footer_style)
 
-    def _set_cell_value(self, sheet_name, row, column, value, style, title):
-        ws = self.wb[sheet_name]
+    def _set_cell_value(self, row, column, value, style, title):
+        ws = self.wb[self.sheet_name]
         ws.cell(row=row, column=column).value = value
         ws.cell(row=row, column=column).style = style
         form = getattr(Formats, title)
         ws.cell(row=row, column=column).number_format = form
 
-    def _set_column_width(self, sheet_name, title, column):
-        ws = self.wb[sheet_name]
+    def _set_column_width(self, title, column):
+        ws = self.wb[self.sheet_name]
         width = getattr(Widths, title)
         ws.column_dimensions[get_column_letter(column)].width = width
 
-    def _set_row_data(self, obj, sheet_name, row, column, style):
+    def _set_row_data(self, obj, row, column, style):
         for attribute in fields(self.table):
             title = attribute.name
             index = column
@@ -176,22 +157,21 @@ class BaseTable:
                 value = self._get_value(row, obj, title)
                 # Merge cells around direction title
                 if title == 'event_title' and isinstance(obj, SummaryTable):
-                    self._set_merge(sheet_name, row, column)
+                    self._set_merge(row, column)
                     chosen_style = Titles.direction_style
                     column = self.column + 1
-                self._set_cell_value(sheet_name, row, column, value,
-                                     chosen_style, title)
+                self._set_cell_value(row, column, value, chosen_style, title)
                 column = index + 1
         # Set addition height with direction row
         if isinstance(obj, SummaryTable):
-            self._set_height(sheet_name, row)
+            self._set_height(row)
 
-    def _set_height(self, sheet_name, row):
-        ws = self.wb[sheet_name]
+    def _set_height(self, row):
+        ws = self.wb[self.sheet_name]
         ws.row_dimensions[row].height = self.header_height
 
-    def _set_merge(self, sheet_name, row, column):
-        ws = self.wb[sheet_name]
+    def _set_merge(self, row, column):
+        ws = self.wb[self.sheet_name]
         ws.merge_cells(start_row=row, start_column=self.column + 1,
                        end_row=row, end_column=column)
 
@@ -220,12 +200,25 @@ class BaseTable:
 
 
 class DirectionsTable(BaseTable):
-    def _create_directions(self, sheet_name: str) -> None:
+    def _get_table(self):
+        return self.tables[self.sums[0].directions]
+
+    def _get_name(self):
+        return getattr(SheetNames, self.sums[0].directions)
+
+    def _sort_events(self):
+        directions = self.sums[0].directions
+        self.events.sort(
+            key=lambda x: getattr(x, directions), reverse=False
+        )
+
+    def _create_directions(self) -> None:
         '''Insert to existing table "Summary by directions" rows'''
 
         column = self.column
         style = Titles.footer_style
         row = self.content_row
+        sheet_name = self.sheet_name
         ws = self.wb[sheet_name]
         index = 0
         for direction in self.sums:
@@ -233,45 +226,41 @@ class DirectionsTable(BaseTable):
             index += 1
 
             ws.insert_rows(row)
-            self._set_row_data(direction, sheet_name, row, column, style)
+            self._set_row_data(direction, row, column, style)
             row += (direction.amount + 1)
         # We shift merged cells after inserting rows because
         # inserting doesn't affect the merged cells
         row = row - direction.amount - 1
-        self._shift_merge_cells(sheet_name, index, row)
+        self._shift_merge_cells(index, row)
 
-    def _shift_merge_cells(self, sheet_name: str,
-                           amount: int, row: int) -> None:
+    def _shift_merge_cells(self, amount: int, row: int) -> None:
         '''Shift the merged cells
 
         Shift the merged cells wich place after "row" by "amount" rows
         in "sheet_name" list
         '''
-        ws = self.wb[sheet_name]
+        ws = self.wb[self.sheet_name]
         merged_cells_range = ws.merged_cells.ranges
         for merged_cell in merged_cells_range:
             if merged_cell.min_row > row:
                 merged_cell.shift(0, amount)
 
-    def _create_content(self, sheet_name: str):
-        super()._create_content(sheet_name)
-        self._create_directions(sheet_name)
+    def _create_content(self):
+        super()._create_content()
+        self._create_directions()
 
 
 class ByTSOTable(DirectionsTable):
 
     def _get_sheet_name(self):
         sheet_name = super()._get_sheet_name()
-        return f'{sheet_name} {self.by_org}'
+        short_name = self._get_short_name()
+        return f'{sheet_name} {short_name}'
 
     def _get_short_name(self):
         pattern = re.compile(r'[^\w ]+')
-        return re.sub(pattern, '', self.by_org)[:10]
+        return re.sub(pattern, '', self.tso)[:10]
 
     def _get_name(self):
         name = super()._get_name()
-        tso_name = self._get_short_name()
-        return f'{name} {tso_name}'
-
-    def create_table(self) -> None:
-        return super().create_table()
+        return f'{name} {self.tso}'
