@@ -105,6 +105,7 @@ class NetworkTable:
     year_2050: float | None
     total: float | None
 
+
 @dataclass(frozen=True)
 class Chapter7Directions:
     number: int

@@ -1,3 +1,4 @@
+import re
 from dataclasses import fields
 
 from base_datas import BaseEvent, Terms
@@ -25,7 +26,8 @@ class BaseTable:
     }
 
     def __init__(self, events: list[BaseEvent], workbook: Workbook,
-                 terms: list[Terms], sums: list[SummaryTable] = None) -> None:
+                 terms: list[Terms], sums: list[SummaryTable] = None,
+                 by_org: str = None) -> None:
         self.events = events
         self.wb = workbook
         self.styles = {
@@ -37,6 +39,7 @@ class BaseTable:
         }
         self._add_style()
         self.sums = sums
+        self.by_org = by_org
         self._sort_events()
         self.name = self._get_name()
         self.start = terms[0].start_year
@@ -244,7 +247,6 @@ class DirectionsTable(BaseTable):
         Shift the merged cells wich place after "row" by "amount" rows
         in "sheet_name" list
         '''
-
         ws = self.wb[sheet_name]
         merged_cells_range = ws.merged_cells.ranges
         for merged_cell in merged_cells_range:
@@ -254,3 +256,22 @@ class DirectionsTable(BaseTable):
     def _create_content(self, sheet_name: str):
         super()._create_content(sheet_name)
         self._create_directions(sheet_name)
+
+
+class ByTSOTable(DirectionsTable):
+
+    def _get_sheet_name(self):
+        sheet_name = super()._get_sheet_name()
+        return f'{sheet_name} {self.by_org}'
+
+    def _get_short_name(self):
+        pattern = re.compile(r'[^\w ]+')
+        return re.sub(pattern, '', self.by_org)[:10]
+
+    def _get_name(self):
+        name = super()._get_name()
+        tso_name = self._get_short_name()
+        return f'{name} {tso_name}'
+
+    def create_table(self) -> None:
+        return super().create_table()
