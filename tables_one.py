@@ -231,9 +231,9 @@ class DirectionsTable(BaseTable):
         # We shift merged cells after inserting rows because
         # inserting doesn't affect the merged cells
         row = row - direction.amount - 1
-        self._shift_merge_cells(index, row)
+        self._shift_merge_cells(index)
 
-    def _shift_merge_cells(self, amount: int, row: int) -> None:
+    def _shift_merge_cells(self, amount: int) -> None:
         '''Shift the merged cells
 
         Shift the merged cells wich place after "row" by "amount" rows
@@ -242,7 +242,9 @@ class DirectionsTable(BaseTable):
         ws = self.wb[self.sheet_name]
         merged_cells_range = ws.merged_cells.ranges
         for merged_cell in merged_cells_range:
-            if merged_cell.min_row > row:
+            if merged_cell.min_row == len(self.events) + self.column + 1:
+                print(len(self.events) + self.column + 1)
+                print(self.sheet_name)
                 merged_cell.shift(0, amount)
 
     def _create_content(self):

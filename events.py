@@ -89,7 +89,7 @@ class Events(BaseMixin):
         self.network_ch12_sum = self._get_summary_table(
                                                 Titles.network_ch12_directions)
 
-        self.wb, self.table_names = None, None
+        # self.wb, self.table_names = None, None
 
     def _get_wb_and_table_names(self, filename: str):
         wb = load_workbook(filename=filename, data_only=True)
@@ -126,19 +126,34 @@ class Events(BaseMixin):
             return import_data, SummaryTable(*values)
         return import_data
 
-    def _get_summary_table(self, direction_name: str):
+    def _get_summary_table(self, direction_name: str,
+                           events: SourceEvent = None):
         directions = self._get_table(direction_name)
         summary_tables = []
-        events = getattr(self, self.group_event[direction_name])
+        events = (
+            getattr(self, self.group_event[direction_name])
+            if events is None else events
+        )
         atribute_name = self.atributes[direction_name]
         for direct in directions:
             values = (direct.number, direct.name, events, atribute_name)
             summary_tables.append(SummaryTable(*values))
         return summary_tables
 
-    def split_events_by_tso(self, type, attribute):
+    def split_events_by_tso(self, type: str, attribute: str,
+                            direction_name: str):
         events_by_tso = defaultdict(list)
+        directions_by_tso = defaultdict(list)
+        totals = defaultdict(list)
+        number_by_tso = defaultdict(int)
         for event in getattr(self, type + '_events'):
-            a = getattr(event, attribute)
-            events_by_tso[a].append(event)
-        return events_by_tso
+            tso = getattr(event, attribute)
+            number_by_tso[tso] += 1
+            event.number = number_by_tso[tso] 
+            events_by_tso[tso].append(event)
+        for tso, events in events_by_tso.items():
+            directions_by_tso[tso] = self._get_summary_table(
+                                                    direction_name, events)
+            values = (number_by_tso[tso] + 1, Titles.total, events)
+            totals[tso] = SummaryTable(*values)
+        return events_by_tso, totals, directions_by_tso
