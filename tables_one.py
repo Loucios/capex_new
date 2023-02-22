@@ -230,8 +230,8 @@ class DirectionsTable(BaseTable):
             row += (direction.amount + 1)
         # We shift merged cells after inserting rows because
         # inserting doesn't affect the merged cells
-        row = row - direction.amount - 1
-        self._shift_merge_cells(index)
+        # row = row - direction.amount - 1
+        # self._shift_merge_cells(index)
 
     def _shift_merge_cells(self, amount: int) -> None:
         '''Shift the merged cells
