@@ -28,7 +28,7 @@ class Titles:
     event_title = 'Наименование мероприятия'
     event_type = 'Типа прокладки'
     event_years = 'Сроки'
-    filename = 'capex.xlsm'
+    filename = 'capex.xlsx'
     first_year = 'Год начала'
     footer_style = 'footer_style'
     gh = 'Гкал/ч'

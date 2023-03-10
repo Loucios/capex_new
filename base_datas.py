@@ -86,6 +86,13 @@ class NDS:
 
 
 @dataclass
+class TSOList:
+    number: int
+    name: str
+    short_name: str
+
+
+@dataclass
 class BaseEvent:
     number: int
     eto_name: str

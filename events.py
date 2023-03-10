@@ -3,7 +3,7 @@ from collections import defaultdict
 from base_datas import (NDS, ChapterDirect, CTPCostIndicator, DeflatorIndex,
                         NetworkCostIndicator, NetworkEvent,
                         SourceCostIndicator, SourceEvent, Stage, Terms,
-                        TfuUnitCost)
+                        TfuUnitCost, TSOList)
 from openpyxl import load_workbook
 from summary_datas import SummaryTable
 from titles import Titles
@@ -21,6 +21,7 @@ class BaseMixin:
         Titles.source_events: SourceEvent,
         Titles.network_unit_costs: NetworkCostIndicator,
         Titles.ctp_unit_costs: CTPCostIndicator,
+        Titles.tso_list: TSOList,
         Titles.network_events: NetworkEvent,
         Titles.chapter_7_directions: ChapterDirect,
         Titles.chapter_8_directions: ChapterDirect,
@@ -146,14 +147,24 @@ class Events(BaseMixin):
         directions_by_tso = defaultdict(list)
         totals = defaultdict(list)
         number_by_tso = defaultdict(int)
+        # create events_by_tso
         for event in getattr(self, type + '_events'):
             tso = getattr(event, attribute)
             number_by_tso[tso] += 1
             event.number = number_by_tso[tso] 
             events_by_tso[tso].append(event)
         for tso, events in events_by_tso.items():
+            # create directions_by_tso
             directions_by_tso[tso] = self._get_summary_table(
                                                     direction_name, events)
+            # create totals
             values = (number_by_tso[tso] + 1, Titles.total, events)
             totals[tso] = SummaryTable(*values)
         return events_by_tso, totals, directions_by_tso
+
+    def get_tso_name_list(self):
+        tso_list = self._get_table(Titles.tso_list)
+        tso_name_list = {}
+        for tso in tso_list:
+            tso_name_list[tso.name] = tso.short_name
+        return tso_name_list

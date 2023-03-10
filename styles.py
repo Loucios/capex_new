@@ -7,7 +7,7 @@ class Styles:
 
     _title_font = Font(
         name='Calibri',
-        size=14,
+        size=12,
         bold=True,
         italic=False,
         vertAlign=None,
