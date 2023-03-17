@@ -221,6 +221,11 @@ class Chapter8directions:
 class Chapter12Directions:
     number: int
     event_title: str
+    source_name: str
+    mw: float | None
+    gh: float | None
+    th: float | None
+    event_years: str
     year_2020: float | None
     year_2021: float | None
     year_2022: float | None
@@ -252,4 +257,4 @@ class Chapter12Directions:
     year_2048: float | None
     year_2049: float | None
     year_2050: float | None
-    total: float | None
+    # total: float | None

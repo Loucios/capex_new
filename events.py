@@ -1,4 +1,5 @@
 from collections import defaultdict
+from copy import copy
 
 from base_datas import (NDS, ChapterDirect, CTPCostIndicator, DeflatorIndex,
                         NetworkCostIndicator, NetworkEvent,
@@ -142,17 +143,25 @@ class Events(BaseMixin):
         return summary_tables
 
     def split_events_by_tso(self, type: str, attribute: str,
-                            direction_name: str):
+                            direction_name: str, cumulative: bool = False):
+        if cumulative:
+            sum_events_by_tso = defaultdict(list)
+            sum_directions_by_tso = defaultdict(list)
+            sum_totals = {}
+        totals = {}
+        number_by_tso = defaultdict(int)
         events_by_tso = defaultdict(list)
         directions_by_tso = defaultdict(list)
-        totals = defaultdict(list)
-        number_by_tso = defaultdict(int)
         # create events_by_tso
         for event in getattr(self, type + '_events'):
             tso = getattr(event, attribute)
             number_by_tso[tso] += 1
-            event.number = number_by_tso[tso] 
+            event.number = number_by_tso[tso]
             events_by_tso[tso].append(event)
+            if cumulative:
+                sum_event = copy(event)
+                sum_events_by_tso[tso].append(
+                                        self._cum_total_events(sum_event))
         for tso, events in events_by_tso.items():
             # create directions_by_tso
             directions_by_tso[tso] = self._get_summary_table(
@@ -160,11 +169,37 @@ class Events(BaseMixin):
             # create totals
             values = (number_by_tso[tso] + 1, Titles.total, events)
             totals[tso] = SummaryTable(*values)
+            if cumulative:
+                sum_directions_by_tso[tso] = self._get_summary_table(
+                    direction_name, sum_events_by_tso[tso]
+                )
+                values = (
+                    number_by_tso[tso] + 1, Titles.total,
+                    sum_events_by_tso[tso]
+                )
+                sum_totals[tso] = SummaryTable(*values)
+        if cumulative:
+            return (
+                events_by_tso, totals, directions_by_tso,
+                sum_events_by_tso, sum_totals,
+                sum_directions_by_tso
+            )
         return events_by_tso, totals, directions_by_tso
 
-    def get_tso_name_list(self):
+    def get_tso_name_list(self) -> dict:
         tso_list = self._get_table(Titles.tso_list)
         tso_name_list = {}
         for tso in tso_list:
             tso_name_list[tso.name] = tso.short_name
         return tso_name_list
+
+    def _cum_total_events(self, sum_event: SummaryTable) -> SummaryTable:
+        first_year = self.terms[0].start_year
+        last_year = self.terms[0].end_year
+        for year in range(first_year + 1, last_year + 1):
+            setattr(
+                sum_event, 'year_' + str(year),
+                getattr(sum_event, 'year_' + str(year - 1)) +
+                getattr(sum_event, 'year_' + str(year))
+            )
+        return sum_event

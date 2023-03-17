@@ -1,6 +1,7 @@
 from events import Events
 from openpyxl import load_workbook
-from tables_one import BaseTable, ByTSOTable, DirectionsTable
+from tables_one import (BaseTable, ByTSOTable, DirectionsTable,
+                        DirectionsTableSum)
 from titles import Titles
 
 
@@ -65,28 +66,44 @@ def main():
                            tso_short_name)
         table.create_table()
 
+    # -------------------------------------------------------------------
     # Вставляем таблицы по каждой ТСО по источникам в разрезе направлений
     # в Excel
-    events_by_tso, totals, directions_by_tso = events.split_events_by_tso(
-        'source', 'tso_name', Titles.source_ch12_directions
+    (events_by_tso, totals, directions_by_tso, sum_events_by_tso, sum_totals,
+     sum_directions_by_tso) = events.split_events_by_tso(
+        'source', 'tso_name', Titles.source_ch12_directions, True
     )
     for tso_name, tso_events in events_by_tso.items():
-        tso_short_name = tso_list.get(tso_name)
-        table = ByTSOTable(wb, tso_events, totals[tso_name], events.terms,
-                           directions_by_tso[tso_name], tso_name,
-                           tso_short_name)
+        vars1 = (
+            wb, tso_events, totals[tso_name], events.terms,
+            directions_by_tso[tso_name]
+        )
+        vars2 = (
+            sum_events_by_tso[tso_name], sum_totals[tso_name],
+            sum_directions_by_tso[tso_name]
+        )
+        vars3 = (tso_name, tso_list.get(tso_name))
+        table = DirectionsTableSum(*vars1, *vars2, *vars3)
         table.create_table()
 
+    # -------------------------------------------------------------------
     # Вставляем таблицы по каждой ТСО по тепловым сетям
     # в разрезе направлений в Excel
-    events_by_tso, totals, directions_by_tso = events.split_events_by_tso(
-        'network', 'tso_name', Titles.network_ch12_directions
+    (events_by_tso, totals, directions_by_tso, sum_events_by_tso, sum_totals,
+     sum_directions_by_tso) = events.split_events_by_tso(
+        'network', 'tso_name', Titles.network_ch12_directions, True
     )
     for tso_name, tso_events in events_by_tso.items():
-        tso_short_name = tso_list.get(tso_name)
-        table = ByTSOTable(wb, tso_events, totals[tso_name], events.terms,
-                           directions_by_tso[tso_name], tso_name,
-                           tso_short_name)
+        vars1 = (
+            wb, tso_events, totals[tso_name], events.terms,
+            directions_by_tso[tso_name]
+        )
+        vars2 = (
+            sum_events_by_tso[tso_name], sum_totals[tso_name],
+            sum_directions_by_tso[tso_name]
+        )
+        vars3 = (tso_name, tso_list.get(tso_name))
+        table = DirectionsTableSum(*vars1, *vars2, *vars3)
         table.create_table()
 
     # Сохраняем сделанное
