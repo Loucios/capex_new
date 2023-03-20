@@ -49,11 +49,12 @@ class SummaryTable:
     year_2050: float = 0.0
     total: float = 0.0
     amount: int = field(init=False, default=0)
+    row_name: str = Titles.row_name_first
 
     def __post_init__(self, events: list[object]) -> None:
         exclude_names = [
             'number', 'directions', 'event_title', 'event_years',
-            'diameter', 'amount',
+            'diameter', 'amount', 'row_name'
         ]
         diameter = 0
         length = 0

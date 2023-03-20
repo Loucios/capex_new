@@ -11,6 +11,7 @@ class Widths:
     source_id = 6
     source_name = 16
     event_title = 30
+    row_name = 30
     event_years = 12
     mw = 7
     laying_type = 15
@@ -72,6 +73,7 @@ class Formats:
     source_id = 'General'
     source_name = 'General'
     event_title = 'General'
+    row_name = 'General'
     event_years = 'General'
     mw = '# ##0'
     laying_type = 'General'

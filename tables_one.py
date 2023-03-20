@@ -148,49 +148,6 @@ class BaseTable:
         ws.cell(row=row, column=year_column).value = Titles.capex_flow
         ws.row_dimensions[row + 1].height = height
 
-    def _create_hea(self) -> None:
-        '''Create header of our table'''
-        column = self.column
-        row = self.header_row
-        height = self.header_height
-        style = Titles.header_style
-        ws = self.wb[self.sheet_name]
-
-        for attribute in fields(self.table):
-            title = attribute.name
-            if 'year_' not in title:
-                # Base header cell
-                ws.merge_cells(
-                    start_row=row, start_column=column,
-                    end_row=row + 1, end_column=column
-                )
-                ws.cell(row=row, column=column).value = getattr(Titles, title)
-                ws.cell(row=row, column=column).style = style
-                ws.cell(row=row + 1, column=column).style = style
-                self._set_column_width(title, column)
-                column += 1
-            else:
-                # We must merge first row
-                period = self.end - self.start + 1
-                ws.merge_cells(
-                    start_row=row, start_column=column,
-                    end_row=row, end_column=column + period
-                )
-                ws.cell(row=row, column=column).value = Titles.capex_flow
-                # And draw head_capex_flow cells with dates in second row
-                for year in range(self.start, self.end + 1):
-                    ws.cell(row=row, column=column).style = style
-                    ws.cell(row=row + 1, column=column).value = year
-                    ws.cell(row=row + 1, column=column).style = style
-                    self._set_column_width('year_' + str(year), column)
-                    column += 1
-                ws.cell(row=row, column=column).style = style
-                ws.cell(row=row + 1, column=column).style = style
-                ws.cell(row=row + 1, column=column).value = Titles.total
-                self._set_column_width('total', column)
-                break
-        ws.row_dimensions[row + 1].height = height
-
     def _set_column_width(self, title, column):
         ws = self.wb[self.sheet_name]
         width = getattr(Widths, title)
@@ -337,6 +294,8 @@ class ByTSOTable(DirectionsTable):
 
 
 class DirectionsTableSum(ByTSOTable):
+    content_row = 4
+
     def __init__(self, workbook, events, total, terms,
                  sums, sum_events, sum_total, sum_sums,
                  tso=None, short_tso=None) -> None:
@@ -356,6 +315,7 @@ class DirectionsTableSum(ByTSOTable):
     def _create_footer(self):
         row = self.content_row
         self._set_row_data(self.total, row, Titles.footer_style)
+        self.sum_total.row_name = Titles.row_name_second
         self._set_row_data(self.sum_total, row + 1, Titles.footer_style)
         row += 2
         self.last_row = row
@@ -364,14 +324,16 @@ class DirectionsTableSum(ByTSOTable):
         row = self.last_row
         for event, sum_event in zip(self.events, self.sum_events):
             self._set_row_data(event, row, Titles.base_style)
+            sum_event.row_name = Titles.row_name_second
             self._set_row_data(sum_event, row + 1, Titles.base_style)
             row += 2
         row = self.last_row
         for direction, sum_direction in zip(self.sums, self.sum_sums):
             self.wb[self.sheet_name].insert_rows(row)
-            self._set_row_data(direction, row, Titles.footer_style)
+            self._set_row_data(direction, row, Titles.base_style)
             self.wb[self.sheet_name].insert_rows(row + 1)
-            self._set_row_data(sum_direction, row + 1, Titles.footer_style)
+            sum_direction.row_name = Titles.row_name_second
+            self._set_row_data(sum_direction, row + 1, Titles.base_style)
             row += (direction.amount + 1) * 2
         self.last_row = row
 
@@ -383,4 +345,32 @@ class DirectionsTableSum(ByTSOTable):
             self._create_header()
         self._create_footer()
         self._create_content()
-        # self._merge_cells()
+
+    def _create_header(self):
+        '''Create header of our table'''
+        column = self.column
+        row = self.header_row
+        # height = self.header_height
+        style = Titles.header_style
+        ws = self.wb[self.sheet_name]
+
+        for attribute in fields(self.table):
+            title = attribute.name
+            if 'year_' in title:
+                if self.start <= int(title[-4:]) <= self.end:
+                    ws.cell(row=row, column=column).value = title[-4:]
+                    ws.cell(row=row, column=column).style = style
+                    self._set_column_width(title, column)
+                    column += 1
+            elif title == 'total':
+                ws.cell(row=row, column=column).value = getattr(Titles, title)
+                ws.cell(row=row, column=column).style = style
+                self._set_column_width(title, column)
+                column += 1
+            else:
+                # merge first and second row
+                ws.cell(row=row, column=column).style = style
+                ws.cell(row=row, column=column).value = getattr(Titles, title)
+                self._set_column_width(title, column)
+                column += 1
+        # ws.row_dimensions[row + 1].height = height

@@ -13,7 +13,7 @@ def main():
 
     # Открываем файл
     wb = load_workbook(filename=filename)
-
+    '''
     # Вставляем таблицу по источникам в Excel
     table = BaseTable(wb, events.source_events, events.source_total,
                       events.terms)
@@ -42,8 +42,9 @@ def main():
     table.create_table()
 
     # Вставляем таблицы по каждой ТСО по источникам в разрезе направлений
-    # в Excel
+    # в Excel'''
     tso_list = events.get_tso_name_list()
+    '''
     events_by_tso, totals, directions_by_tso = events.split_events_by_tso(
         'source', 'tso_name', Titles.chapter_7_directions
     )
@@ -64,7 +65,7 @@ def main():
         table = ByTSOTable(wb, tso_events, totals[tso_name], events.terms,
                            directions_by_tso[tso_name], tso_name,
                            tso_short_name)
-        table.create_table()
+        table.create_table()'''
 
     # -------------------------------------------------------------------
     # Вставляем таблицы по каждой ТСО по источникам в разрезе направлений
